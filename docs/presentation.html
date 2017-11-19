@@ -20,7 +20,6 @@ dortje
   </p>
   <p class="date">19 November 2017</p>
 </div>
-
 <style type="text/css">
 
 body{ /* Normal  */
@@ -60,6 +59,7 @@ pre { /* Code block - determines code spacing between lines */
 <li>exploring the variables within the data set while also paying attention to the relationship and</li>
 <li>modling a linear regression model by choosing the outcome and then selecting the predictors.</li>
 </ul>
+<p>Please check out the awesome app and tell me what you think about it: <a href="https://dortje.shinyapps.io/mtcars_visualization/" class="uri">https://dortje.shinyapps.io/mtcars_visualization/</a></p>
 <p><sup>1</sup> When it comes to building linear regression models on the data set.</p>
 </div>
 <div id="analyzing" class="slide section level2">
@@ -98,14 +98,51 @@ summary(lin_model)</code></pre>
 ## Multiple R-squared:  0.7837, Adjusted R-squared:  0.7605 
 ## F-statistic: 33.81 on 3 and 28 DF,  p-value: 1.906e-09</code></pre>
 </div>
-<div id="final-notes" class="slide section level2">
-<h2>Final Notes</h2>
-<p>Please check out the awesome app and tell me what you think about it: <a href="https://dortje.shinyapps.io/mtcars_visualization/" class="uri">https://dortje.shinyapps.io/mtcars_visualization/</a></p>
-<p>Some Background Information:</p>
-<ul>
-<li>The app is robust to some errors (e.g. selecting no predictors or selecting the output also as a predictor).</li>
-<li>To make the visualizations dynamic, the input strings need to be transformed to variables with the help of aes_string() for ggplot() and formula() for creating the formula for the linear model.</li>
-</ul>
+<div id="full-code-from-server.r" class="slide section level2">
+<h2>Full code from server.R</h2>
+<pre class="r"><code>library(shiny)
+library(ggplot2)
+
+data(mtcars)
+mtcars$cyl &lt;- as.factor(mtcars$cyl)
+mtcars$vs &lt;- as.factor(mtcars$vs)
+mtcars$am &lt;- as.factor(mtcars$am)
+mtcars$gear &lt;- as.factor(mtcars$gear)
+mtcars$carb &lt;- as.factor(mtcars$carb)
+
+shinyServer(function(input, output) {
+    lin_model &lt;- reactive({
+        out &lt;- input$select_out
+        preds &lt;- input$chkbox_pred
+        preds &lt;- preds[!preds %in% out]
+        
+        if(length(preds) &gt; 0) {
+                model_formula = formula(paste(out, &quot;~&quot;, paste(preds, collapse=&quot;+&quot;)))
+                lm(model_formula, data=mtcars)
+        } else {
+           return(NULL) 
+        }
+    })
+    output$var_plot &lt;- renderPlot({
+        x_var &lt;- input$select_x
+        y_var &lt;- input$select_y
+        col_var &lt;- input$select_col
+        if (col_var == &quot;none&quot;) {
+            g &lt;- ggplot(mtcars, aes_string(x=x_var, y=y_var))
+        } else {
+            g &lt;- ggplot(mtcars, aes_string(x=x_var, y=y_var, color=col_var))
+        }
+        g + geom_point() + geom_smooth(method=&quot;lm&quot;)
+
+    })
+    output$modelSummary &lt;- renderPrint({
+        if(!is.null(lin_model())) {
+            summary(lin_model())
+        } else {
+            print(&quot;No predictors selected yet.&quot;)
+        }
+    })
+})</code></pre>
 </div>
 
   <!-- dynamically load mathjax for compatibility with self-contained -->

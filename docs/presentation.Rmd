@@ -51,7 +51,8 @@ With the super awesome shiny app "Analyzing and Modeling Motortrends Car Data Se
 - exploring the variables within the data set while also paying attention to the relationship and
 - modling a linear regression model by choosing the outcome and then selecting the predictors.
 
-
+Please check out the awesome app and tell me what you think about it:
+https://dortje.shinyapps.io/mtcars_visualization/
 
 ^1^ When it comes to building linear regression models on the data set.
 
@@ -72,12 +73,49 @@ lin_model <- lm(model_formula, data=mtcars)
 summary(lin_model)
 ```
 
-## Final Notes
+## Full code from server.R
+```{r server_code, echo=TRUE, eval=FALSE}
+library(shiny)
+library(ggplot2)
 
-Please check out the awesome app and tell me what you think about it:
-https://dortje.shinyapps.io/mtcars_visualization/
+data(mtcars)
+mtcars$cyl <- as.factor(mtcars$cyl)
+mtcars$vs <- as.factor(mtcars$vs)
+mtcars$am <- as.factor(mtcars$am)
+mtcars$gear <- as.factor(mtcars$gear)
+mtcars$carb <- as.factor(mtcars$carb)
 
-Some Background Information:
+shinyServer(function(input, output) {
+    lin_model <- reactive({
+        out <- input$select_out
+        preds <- input$chkbox_pred
+        preds <- preds[!preds %in% out]
+        
+        if(length(preds) > 0) {
+                model_formula = formula(paste(out, "~", paste(preds, collapse="+")))
+                lm(model_formula, data=mtcars)
+        } else {
+           return(NULL) 
+        }
+    })
+    output$var_plot <- renderPlot({
+        x_var <- input$select_x
+        y_var <- input$select_y
+        col_var <- input$select_col
+        if (col_var == "none") {
+            g <- ggplot(mtcars, aes_string(x=x_var, y=y_var))
+        } else {
+            g <- ggplot(mtcars, aes_string(x=x_var, y=y_var, color=col_var))
+        }
+        g + geom_point() + geom_smooth(method="lm")
 
-- The app is robust to some errors (e.g. selecting no predictors or selecting the output also as a predictor).
-- To make the visualizations dynamic, the input strings need to be transformed to variables with the help of aes_string() for ggplot() and formula() for creating the formula for the linear model.
+    })
+    output$modelSummary <- renderPrint({
+        if(!is.null(lin_model())) {
+            summary(lin_model())
+        } else {
+            print("No predictors selected yet.")
+        }
+    })
+})
+```
