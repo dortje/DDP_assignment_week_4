@@ -4,7 +4,7 @@ library(shiny)
 shinyUI(fluidPage(
   
   # Application title
-  titlePanel("Analyzing Motortrends Car Data and building a linear regression model"),
+  titlePanel("Analyzing and Modeling Motortrends Car Data Set"),
   
   h3("Introduction"),
   p("This application helps analyzing the mtcars data set from R and helps building a linear regression model."),

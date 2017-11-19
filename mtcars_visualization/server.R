@@ -28,14 +28,14 @@ shinyServer(function(input, output) {
     
     output$var_plot <- renderPlot({
 
-        pred_var <- input$select_x
-        out_var <- input$select_y
+        x_var <- input$select_x
+        y_var <- input$select_y
         col_var <- input$select_col
 
         if (col_var == "none") {
-            g <- ggplot(mtcars, aes_string(x=pred_var, y=out_var))
+            g <- ggplot(mtcars, aes_string(x=x_var, y=y_var))
         } else {
-            g <- ggplot(mtcars, aes_string(x=pred_var, y=out_var, color=col_var))
+            g <- ggplot(mtcars, aes_string(x=x_var, y=y_var, color=col_var))
         }
 
         g + geom_point() + geom_smooth(method="lm")
